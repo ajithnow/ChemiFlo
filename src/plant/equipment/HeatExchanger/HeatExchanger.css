@@ -1,0 +1,98 @@
+.plant-hx {
+  display: block;
+  overflow: visible;
+}
+.plant-hx-edge {
+  stroke: var(--plant-metal-edge);
+  stroke-width: 1;
+}
+.plant-hx-steel {
+  fill: var(--plant-metal-lo);
+  stroke: var(--plant-metal-edge);
+  stroke-width: 1;
+}
+.plant-hx-interior {
+  fill: var(--plant-interior);
+}
+.plant-hx-window {
+  fill: none;
+  stroke: var(--plant-metal-edge);
+  stroke-width: 1.5;
+}
+.plant-hx-shell-fluid {
+  opacity: 0.18;
+  transition: opacity 0.5s;
+}
+.plant-hx.is-running .plant-hx-shell-fluid {
+  opacity: 0.5;
+}
+.plant-hx-shell-flow {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-dasharray: 6 4;
+  opacity: 0.35;
+}
+.plant-hx.is-running .plant-hx-shell-flow {
+  opacity: 1;
+  animation: plant-flow 1.2s linear infinite;
+}
+.plant-hx-baffle {
+  fill: var(--plant-metal-lo);
+}
+.plant-hx-tube {
+  stroke-width: 3.5;
+  opacity: 0.55;
+  transition: opacity 0.5s;
+}
+.plant-hx.is-running .plant-hx-tube {
+  opacity: 1;
+}
+.plant-hx-particles {
+  stroke: #fff;
+  stroke-opacity: 0.8;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 0 10;
+  animation: plant-flow 0.8s linear infinite;
+}
+.plant-hx-tags {
+  font: 600 10px var(--plant-mono);
+  fill: var(--plant-text);
+}
+.plant-hx-partition {
+  stroke: var(--plant-metal-edge);
+  stroke-width: 2;
+}
+.plant-hx-return {
+  fill: none;
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  opacity: 0.8;
+}
+.plant-hx-thermal {
+  opacity: 0.4;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+.plant-hx.is-running .plant-hx-thermal {
+  opacity: 0.55;
+}
+.plant-hx-properties {
+  margin-top: 10px;
+  font-size: 11px;
+}
+.plant-hx-properties summary {
+  cursor: pointer;
+  color: var(--plant-text-muted);
+}
+.plant-hx-properties p,
+.plant-hx-note {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--plant-text-muted);
+}
+.plant-hx-properties .plant-fp-row {
+  margin-top: 8px;
+  grid-template-columns: 1fr 1fr;
+}

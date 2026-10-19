@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": true,
+    "rootDir": "src/plant/equipment/HeatExchanger",
+    "outDir": ".test-build/heat-exchanger"
+  },
+  "include": ["src/plant/equipment/HeatExchanger/model.ts"]
+}
