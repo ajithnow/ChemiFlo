@@ -2,6 +2,8 @@ import { Position, useReactFlow, useUpdateNodeInternals, type NodeProps } from "
 import { useEffect, useId } from "react";
 import { Equipment, Port } from "../../components/Equipment";
 import { FaceplateSection, Field, NumberInput, RangeInput, Readout, Segmented, StreamLabel } from "../../components/Faceplate";
+import { InletPipeProperties } from "../../components/InletPipeProperties";
+import { useResolvedEquipment } from "../../simulationContext";
 import type { PlantEdge, PlantNode } from "../../types";
 import { defaultHeatExchangerDesign, heatExchangerPerformance, temperatureColor, thermalProperties } from "./model";
 import type { HeatExchangerData, HeatExchangerDesign, HeatExchangerNodeType, HeatExchangerThermalProperties } from "./types";
@@ -224,11 +226,15 @@ export const HeatExchangerSymbol = ({ running, design = defaultHeatExchangerDesi
 
 const nozzlePosition = (nozzle: Nozzle) => (nozzle.side === "left" ? Position.Left : Position.Right);
 
-export const HeatExchangerNode = ({ id, data, selected }: NodeProps<HeatExchangerNodeType>) => {
+export const HeatExchangerNode = ({ id, data: savedData, selected }: NodeProps<HeatExchangerNodeType>) => {
+  const equipment = useResolvedEquipment(id);
+  const resolved = equipment?.type === "heatExchanger" ? equipment : undefined;
+  const data = resolved?.data ?? savedData;
+  const calculationError = resolved?.calculationError;
   const { updateNodeData, setNodes } = useReactFlow<PlantNode, PlantEdge>();
   const updateNodeInternals = useUpdateNodeInternals();
   const update = (patch: Partial<HeatExchangerData>) => updateNodeData(id, patch);
-  const performance = heatExchangerPerformance(data);
+  const performance = resolved?.performance ?? heatExchangerPerformance(data);
   const { hotInX, hotOutX, coldIn, coldOut } = layout(data);
 
   // Nozzles move when passes or arrangement change; React Flow must re-measure the ports.
@@ -241,7 +247,7 @@ export const HeatExchangerNode = ({ id, data, selected }: NodeProps<HeatExchange
       onToggleRunning={() => update({ running: !data.running })}
       propertiesOpen={selected}
       onOpenProperties={() => setNodes(nodes => nodes.map(node => ({ ...node, selected: node.id === id })))}
-      summary={
+      summary={calculationError ? <span>Temperature unavailable</span> :
         <>
           <span className="plant-summary-duty">{Math.round(performance.duty)} kW</span>
           <StreamLabel stream="hot">{fmt(data.hotIn)} → {fmt(performance.hotOut)}</StreamLabel>
@@ -253,7 +259,7 @@ export const HeatExchangerNode = ({ id, data, selected }: NodeProps<HeatExchange
           <HeatExchangerSymbol
             running={data.running}
             design={data}
-            temperatures={{ hotIn: data.hotIn, hotOut: performance.hotOut, coldIn: data.coldIn, coldOut: performance.coldOut }}
+            temperatures={calculationError ? undefined : { hotIn: data.hotIn, hotOut: performance.hotOut, coldIn: data.coldIn, coldOut: performance.coldOut }}
           />
           <Port id="cold-in" position={nozzlePosition(coldIn)} offset={(coldIn.y / H) * 100} />
           <Port id="cold-out" position={nozzlePosition(coldOut)} offset={(coldOut.y / H) * 100} />
@@ -266,12 +272,17 @@ export const HeatExchangerNode = ({ id, data, selected }: NodeProps<HeatExchange
 };
 
 /** Editable fields live outside the node so opening them never changes its size. */
-export const HeatExchangerProperties = ({ id, data }: { id: string; data: HeatExchangerData }) => {
+export const HeatExchangerProperties = ({ id, data: savedData }: { id: string; data: HeatExchangerData }) => {
+  const equipment = useResolvedEquipment(id);
+  const resolved = equipment?.type === "heatExchanger" ? equipment : undefined;
+  const data = resolved?.data ?? savedData;
+  const calculationError = resolved?.calculationError;
+  const inlets = resolved?.inlets ?? {};
   const { updateNodeData } = useReactFlow<PlantNode, PlantEdge>();
   const update = (patch: Partial<HeatExchangerData>) => updateNodeData(id, patch);
-  const performance = heatExchangerPerformance(data);
+  const performance = resolved?.performance ?? heatExchangerPerformance(data);
   const thermal = thermalProperties(data);
-  const updateThermal = (patch: Partial<HeatExchangerThermalProperties>) => update({ thermal: { ...data.thermal, ...patch } });
+  const updateThermal = (patch: Partial<HeatExchangerThermalProperties>) => update({ thermal: { ...savedData.thermal, ...patch } });
 
   return (
     <>
@@ -288,19 +299,25 @@ export const HeatExchangerProperties = ({ id, data }: { id: string; data: HeatEx
           <tbody>
             <tr>
               <th><StreamLabel stream="hot">Hot</StreamLabel></th>
-              <td><NumberInput label="Hot inlet temperature" value={data.hotIn} onChange={hotIn => update({ hotIn })} /></td>
-              <td><NumberInput label="Hot flow" value={data.hotFlow} min={0} step={0.5} onChange={hotFlow => update({ hotFlow })} /></td>
-              <td><output>{performance.hotOut.toFixed(1)}</output></td>
+              <td>{calculationError && inlets.hot ? <output>—</output> : <NumberInput label="Hot inlet temperature" readOnly={Boolean(inlets.hot)} value={data.hotIn} onChange={hotIn => update({ hotIn })} />}</td>
+              <td><NumberInput label="Hot flow" readOnly={Boolean(inlets.hot) && !inlets.hot?.controlsFlow} value={data.hotFlow} min={0} step={0.5} onChange={hotFlow => update({ hotFlow })} /></td>
+              <td><output>{calculationError ? "—" : performance.hotOut.toFixed(1)}</output></td>
             </tr>
             <tr>
               <th><StreamLabel stream="cold">Cold</StreamLabel></th>
-              <td><NumberInput label="Cold inlet temperature" value={data.coldIn} onChange={coldIn => update({ coldIn })} /></td>
-              <td><NumberInput label="Cold flow" value={data.coldFlow} min={0} step={0.5} onChange={coldFlow => update({ coldFlow })} /></td>
-              <td><output>{performance.coldOut.toFixed(1)}</output></td>
+              <td>{calculationError && inlets.cold ? <output>—</output> : <NumberInput label="Cold inlet temperature" readOnly={Boolean(inlets.cold)} value={data.coldIn} onChange={coldIn => update({ coldIn })} />}</td>
+              <td><NumberInput label="Cold flow" readOnly={Boolean(inlets.cold) && !inlets.cold?.controlsFlow} value={data.coldFlow} min={0} step={0.5} onChange={coldFlow => update({ coldFlow })} /></td>
+              <td><output>{calculationError ? "—" : performance.coldOut.toFixed(1)}</output></td>
             </tr>
           </tbody>
         </table>
       </FaceplateSection>
+
+      {(["hot", "cold"] as const).map(stream => {
+        const inlet = inlets[stream];
+        if (!inlet) return null;
+        return <InletPipeProperties key={stream} inlet={inlet} stream={stream} />;
+      })}
 
       <FaceplateSection title="Design">
         <div className="plant-fp-row">
@@ -336,8 +353,8 @@ export const HeatExchangerProperties = ({ id, data }: { id: string; data: HeatEx
           <summary>Thermal properties</summary>
           <p>Single-phase fluids. Enter properties at mean fluid temperatures. Re-evaluate film coefficients when flows, passes or baffles change.</p>
           <div className="plant-fp-row">
-            <Field label="Hot Cp kJ/kg K"><NumberInput label="Hot specific heat" value={thermal.hotSpecificHeat} min={0.001} step={0.01} onChange={hotSpecificHeat => updateThermal({ hotSpecificHeat })} /></Field>
-            <Field label="Cold Cp kJ/kg K"><NumberInput label="Cold specific heat" value={thermal.coldSpecificHeat} min={0.001} step={0.01} onChange={coldSpecificHeat => updateThermal({ coldSpecificHeat })} /></Field>
+            <Field label="Hot Cp kJ/kg K"><NumberInput label="Hot specific heat" readOnly={Boolean(inlets.hot) && !inlets.hot?.controlsFlow} value={thermal.hotSpecificHeat} min={0.001} step={0.01} onChange={hotSpecificHeat => updateThermal({ hotSpecificHeat })} /></Field>
+            <Field label="Cold Cp kJ/kg K"><NumberInput label="Cold specific heat" readOnly={Boolean(inlets.cold) && !inlets.cold?.controlsFlow} value={thermal.coldSpecificHeat} min={0.001} step={0.01} onChange={coldSpecificHeat => updateThermal({ coldSpecificHeat })} /></Field>
           </div>
           <div className="plant-fp-row">
             <Field label="Tube OD mm"><NumberInput label="Tube outer diameter" value={thermal.tubeOuterDiameter * 1000} min={thermal.tubeInnerDiameter * 1000 + 0.1} step={0.1} onChange={value => updateThermal({ tubeOuterDiameter: value / 1000 })} /></Field>
@@ -358,7 +375,7 @@ export const HeatExchangerProperties = ({ id, data }: { id: string; data: HeatEx
       </FaceplateSection>
 
       <FaceplateSection title="Performance">
-        <div className="plant-fp-readouts">
+        {calculationError ? <p className="plant-hx-note">No steady-state temperature. Review the loop heat balance.</p> : <div className="plant-fp-readouts">
           <Readout label="Duty" value={Math.round(performance.duty).toString()} unit="kW" primary />
           <Readout label="Effectiveness" value={performance.effectiveness.toFixed(2)} />
           <Readout label="Uo" value={Math.round(performance.u).toString()} unit="W/m²K" title="Overall coefficient on outside tube area, including wall and both fouling resistances" />
@@ -366,8 +383,8 @@ export const HeatExchangerProperties = ({ id, data }: { id: string; data: HeatEx
           <Readout label="NTU" value={performance.ntu.toFixed(2)} />
           <Readout label="LMTD" value={performance.lmtd?.toFixed(1) ?? "—"} unit="K" />
           <Readout label="FT" value={performance.correctionFactor?.toFixed(3) ?? "—"} title="LMTD correction factor; single-pass uses its own flow arrangement's LMTD" />
-        </div>
-        {performance.correctionFactor !== null && performance.correctionFactor < 0.75 && (
+        </div>}
+        {!calculationError && performance.correctionFactor !== null && performance.correctionFactor < 0.75 && (
           <p className="plant-hx-note" role="status">FT is below 0.75. Review the exchanger arrangement and operating conditions.</p>
         )}
       </FaceplateSection>

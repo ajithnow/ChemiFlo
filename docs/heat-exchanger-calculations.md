@@ -4,7 +4,7 @@ Reference: the supplied `mod1.pdf`, NPTEL Chemical Engineering Design II, Module
 
 ## Scope and inputs
 
-The hot stream is on the shell side and the cold stream is in the tubes. The model predicts outlet temperatures for known inlet temperatures, flows, geometry and film coefficients. It assumes steady single-phase operation, constant properties at each stream's mean/caloric temperature, and no heat loss to the surroundings. It supports one tube pass (counter/parallel) and one shell pass with two tube passes. It does not implement the PDF's six-tube-pass revision, pressure-drop design, mechanical sizing, condensers or reboilers.
+The hot stream is on the shell side and the cold stream is in the tubes. The model predicts outlet temperatures for known inlet temperatures, flows, geometry and film coefficients. It assumes steady single-phase operation, constant properties at each stream's mean/caloric temperature, and no heat loss from the exchanger itself to the surroundings. Connecting pipes can separately exchange heat with ambient, as described below. It supports one tube pass (counter/parallel) and one shell pass with two tube passes. It does not implement the PDF's six-tube-pass revision, pressure-drop design, mechanical sizing, condensers or reboilers.
 
 `HeatExchangerDesign.thermal` is optional; partial overrides preserve the remaining defaults. These are illustrative inputs, not temperature-dependent water-property correlations:
 
@@ -83,3 +83,22 @@ Tests are in `tests/heat-exchanger.test.mjs`; run `npm test`.
 The PDF prints LMTD 42.75 °F and approximately 2100 ft². Its stated terminal temperatures give the more precise values above. Its page-24 substitution uses a squared diameter ratio for heat-transfer areas and prints Uo 53.5 Btu/(h ft² °F). Tests intentionally use the linear ratio and exact cylindrical conduction instead of reproducing that mistake. The page-24 film coefficients come from the revised geometry; the tests check that resistance calculation separately from first-iteration geometry.
 
 Further tests cover heat lost = heat gained, `Q=Uo Ao FT LMTD`, outlet-temperature bounds, sensitivity to fouling and wall conductivity, two-pass independence from the single-pass selector, zero/stopped/reversed flows, equal and nearly equal terminal differences, tiny/large NTU, a 100-point low-flow sweep, default compatibility, and invalid inputs.
+
+## Series connections and connecting pipes
+
+`src/plant/network.ts` solves constant-property equipment and pipe temperature equations simultaneously, supporting open paths and closed circulation loops. A connected inlet inherits the upstream outlet temperature (after the pipe), mass flow and specific heat. The other inlet remains independent unless it is also connected. Changes to inlet conditions, geometry, thermal inputs or running state recalculate all downstream units. Saved manual inputs are retained and restored on disconnection. Stopped exchangers remain zero-duty pass-through units, consistent with the standalone model; stopping a unit does not close a valve.
+
+Pipes use constant mass flow, specific heat, ambient temperature and total conductance UA. The steady plug-flow energy balance integrates to:
+
+```text
+Tdownstream = Tambient + (Tupstream - Tambient) exp(-UA / (1000 massFlow cp))
+Qpipe = massFlow cp (Tupstream - Tdownstream)    [kW]
+```
+
+UA is W/K, mass flow is kg/s, cp is kJ/(kg K), and temperatures are °C. The implementation uses `expm1` for small UA. Positive Qpipe means heat loss; negative means heat gain. Temperatures approach ambient without crossing it. With zero mass flow, transported duty is zero and the inlet temperature is retained as a display convention; stagnant-fluid transients are not modeled.
+
+This is the constant-ambient, constant-conductance simplification of the exponential pipe temperature relation described in [MathWorks' thermal-liquid pipe documentation](https://www.mathworks.com/help/simscape/ref/pipetl.html). UA combines fluid films, pipe wall and insulation into one user-supplied value. It is not inferred from drawing length. Defaults are UA = 0 W/K and ambient = 25 °C; existing pipes therefore transfer the upstream outlet temperature unchanged.
+
+Only outlet-to-inlet connections and one pipe per port are supported; circulation loops are allowed. Connections may cross between shell and tube sides; fluid cp follows the stream. Splitting, mixing, pressure drop, phase change and transport delays are outside this model. See [closed-loop flow/Cp controls, energy balance and unavailable steady states](heater-calculations.md#heaterexchanger-circulation). Film coefficients remain user inputs and should be reviewed when inherited flow changes.
+
+`tests/plant-network.test.mjs` verifies multi-unit propagation on both sides, updates and disconnections, reverse dragging, cross-side feeds, mass/energy consistency, stopped/zero-flow behavior, pipe heat loss and gain, an independent half-temperature-difference reference, and invalid graph/input rejection.

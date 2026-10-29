@@ -4,6 +4,7 @@ import { findTool, PLANT_DROP_EVENT, nextTag, type PlantDropDetail } from "./cat
 import type { PlantMode } from "./components/Toolbox";
 import { PlantPropertiesPanel } from "./components/PropertiesPanel";
 import { isValidPlantConnection } from "./connections";
+import { PlantSimulation } from "./PlantSimulation";
 import { plantEdgeTypes, plantNodeTypes } from "./registry";
 import type { PlantEdge, PlantNode } from "./types";
 
@@ -48,27 +49,29 @@ export const PlantFlow = ({ nodes, edges, mode = "select", className, children, 
   const panning = mode === "pan";
 
   return (
-    <ReactFlow
-      ref={wrapper}
-      nodes={nodes}
-      edges={edges}
-      nodeTypes={plantNodeTypes}
-      edgeTypes={plantEdgeTypes}
-      connectionMode={ConnectionMode.Loose}
-      isValidConnection={isValidPlantConnection}
-      panOnDrag={panning ? true : [1, 2]}
-      selectionOnDrag={!panning}
-      nodesDraggable={!panning}
-      nodesConnectable={!panning}
-      onInit={(instance) => {
-        setFlow(instance);
-        onInit?.(instance);
-      }}
-      className={`plant plant-mode-${mode}${className ? ` ${className}` : ""}`}
-      {...props}
-    >
-      {children}
-      <PlantPropertiesPanel />
-    </ReactFlow>
+    <PlantSimulation nodes={nodes} edges={edges}>
+      <ReactFlow
+        ref={wrapper}
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={plantNodeTypes}
+        edgeTypes={plantEdgeTypes}
+        connectionMode={ConnectionMode.Loose}
+        isValidConnection={connection => isValidPlantConnection(connection, edges, nodes)}
+        panOnDrag={panning ? true : [1, 2]}
+        selectionOnDrag={!panning}
+        nodesDraggable={!panning}
+        nodesConnectable={!panning}
+        onInit={(instance) => {
+          setFlow(instance);
+          onInit?.(instance);
+        }}
+        className={`plant plant-mode-${mode}${className ? ` ${className}` : ""}`}
+        {...props}
+      >
+        {children}
+        <PlantPropertiesPanel />
+      </ReactFlow>
+    </PlantSimulation>
   );
 };

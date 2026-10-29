@@ -6,7 +6,7 @@ import {
   heatTransferArea, lmtdCorrectionFactor, logMeanTemperatureDifference,
   overallCoefficient, requiredHeatTransferArea, shellSideCoefficient,
   thermalProperties, tubeSideHydraulics,
-} from "../.test-build/heat-exchanger/model.js";
+} from "../.test-build/equipment/HeatExchanger/model.js";
 
 const design = (patch = {}) => ({ ...defaultHeatExchangerDesign, ...patch });
 const process = (patch = {}) => ({ ...defaultHeatExchangerData("E-test"), running: true, ...patch });

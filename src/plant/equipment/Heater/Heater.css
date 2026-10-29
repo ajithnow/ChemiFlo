@@ -1,0 +1,57 @@
+.plant-heater {
+  display: block;
+  overflow: visible;
+}
+.plant-heater-edge,
+.plant-heater-metal {
+  stroke: var(--plant-metal-edge);
+  stroke-width: 1;
+}
+.plant-heater-metal {
+  fill: var(--plant-metal-lo);
+}
+.plant-heater-window {
+  fill: var(--plant-interior);
+  stroke: var(--plant-metal-edge);
+  stroke-width: 1.5;
+}
+.plant-heater-coil {
+  fill: none;
+  stroke: var(--plant-metal-lo);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.3s;
+}
+.plant-heater.is-heating .plant-heater-coil {
+  stroke: #fb923c;
+}
+.plant-heater-flow {
+  fill: none;
+  stroke: var(--plant-pipe-hot);
+  stroke-width: 2;
+  stroke-dasharray: 4 6;
+  opacity: 0.3;
+}
+.plant-heater.is-heating .plant-heater-flow {
+  opacity: 0.8;
+  animation: plant-flow 1.2s linear infinite;
+}
+.plant-heater-power {
+  fill: none;
+  stroke: var(--plant-text-muted);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.plant-heater-tag {
+  fill: var(--plant-text);
+  font: 600 10px var(--plant-mono);
+}
+@media (prefers-reduced-motion: reduce) {
+  .plant-heater.is-heating .plant-heater-flow {
+    animation: none;
+  }
+  .plant-heater-coil {
+    transition: none;
+  }
+}

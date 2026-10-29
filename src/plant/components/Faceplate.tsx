@@ -14,14 +14,16 @@ export interface NumberInputProps {
   min?: number;
   max?: number;
   step?: number;
+  readOnly?: boolean;
 }
 
-export const NumberInput = ({ value, onChange, label, min, max, step = 1 }: NumberInputProps) => (
+export const NumberInput = ({ value, onChange, label, min, max, step = 1, readOnly }: NumberInputProps) => (
   <input
     type="number"
     className="plant-fp-number"
     aria-label={label}
-    value={value}
+    readOnly={readOnly}
+    value={readOnly ? Number(value.toFixed(3)) : value}
     min={min}
     max={max}
     step={step}

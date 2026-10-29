@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import "@xyflow/react/dist/style.css";
 import { addEdge, Background, BackgroundVariant, Controls, useEdgesState, useNodesState, type Connection } from "@xyflow/react";
-import { PlantFlow, PlantToolbox, toPlantEdge, type PlantEdge, type PlantMode, type PlantNode } from "./plant";
+import { PlantFlow, PlantToolbox, isValidPlantConnection, toPlantEdge, type PlantEdge, type PlantMode, type PlantNode } from "./plant";
 
 const initialNodes: PlantNode[] = [];
 const initialEdges: PlantEdge[] = [];
@@ -12,8 +12,8 @@ function App() {
   const [mode, setMode] = useState<PlantMode>("select");
 
   const onConnect = useCallback(
-    (connection: Connection) => setEdges((eds) => addEdge(toPlantEdge(connection), eds)),
-    [setEdges],
+    (connection: Connection) => setEdges((eds) => isValidPlantConnection(connection, eds, nodes) ? addEdge(toPlantEdge(connection), eds) : eds),
+    [setEdges, nodes],
   );
 
   return (

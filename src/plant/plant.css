@@ -857,3 +857,30 @@
 .plant-toolbox-ghost svg {
   width: 52px;
 }
+
+.plant-fp-number[readonly] {
+  color: var(--plant-text-muted);
+  border-color: transparent;
+  background: transparent;
+  cursor: default;
+}
+
+.plant-network-error {
+  position: absolute;
+  bottom: 20px;
+  left: 80px;
+  right: 20px;
+  z-index: 10;
+  padding: 12px 16px;
+  border: 1px solid #b45309;
+  border-radius: 8px;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 13px;
+}
+
+.plant-process-note {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--plant-text-muted);
+}

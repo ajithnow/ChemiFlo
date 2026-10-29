@@ -1,6 +1,7 @@
 import type { XYPosition } from "@xyflow/react";
 import type { ReactNode } from "react";
 import { heatExchangerTool } from "./equipment/HeatExchanger";
+import { heaterTool } from "./equipment/Heater";
 import type { PlantNode } from "./types";
 
 export const PLANT_DROP_EVENT = "plant:drop";
@@ -28,7 +29,7 @@ export interface PlantTool {
   create: (tag: string, position: XYPosition) => PlantNode;
 }
 
-export const plantTools: PlantTool[] = [heatExchangerTool];
+export const plantTools: PlantTool[] = [heatExchangerTool, heaterTool];
 
 export const findTool = (type: string) => plantTools.find(tool => tool.type === type);
 

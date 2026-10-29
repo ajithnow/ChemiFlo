@@ -1,6 +1,7 @@
 import { Panel, useNodes, useReactFlow } from "@xyflow/react";
 import { useId } from "react";
 import { HeatExchangerProperties } from "../equipment/HeatExchanger/HeatExchanger";
+import { HeaterProperties } from "../equipment/Heater/Heater";
 import type { PlantEdge, PlantNode } from "../types";
 
 /** A single inspector anchored to the viewport, independent of canvas zoom. */
@@ -25,7 +26,7 @@ export const PlantPropertiesPanel = () => {
       >
         <header className="plant-properties-header">
           <div>
-            <span className="plant-properties-eyebrow">Heat exchanger</span>
+            <span className="plant-properties-eyebrow">{node.type === "heater" ? "Heater" : "Heat exchanger"}</span>
             <h2 id={titleId}>{node.data.label} properties</h2>
           </div>
           <button type="button" className="plant-properties-close" aria-label="Close properties" onClick={close}>
@@ -48,7 +49,9 @@ export const PlantPropertiesPanel = () => {
           </button>
         </div>
         <div className="plant-properties-body" key={node.id}>
-          <HeatExchangerProperties id={node.id} data={node.data} />
+          {node.type === "heater"
+            ? <HeaterProperties id={node.id} data={node.data} />
+            : <HeatExchangerProperties id={node.id} data={node.data} />}
         </div>
       </aside>
     </Panel>

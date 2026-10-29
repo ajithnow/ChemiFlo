@@ -6,8 +6,8 @@
     "strict": true,
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
-    "rootDir": "src/plant/equipment/HeatExchanger",
-    "outDir": ".test-build/heat-exchanger"
+    "rootDir": "src/plant",
+    "outDir": ".test-build"
   },
-  "include": ["src/plant/equipment/HeatExchanger/model.ts"]
+  "include": ["src/plant/equipment/HeatExchanger/model.ts", "src/plant/network.ts"]
 }
